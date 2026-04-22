@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Consulta - {{ estudiante.nombre_completo }} - APSA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('estudiantes.lista') }}">Estudiantes</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('estudiantes.ficha', id=estudiante.id) }}">{{ estudiante.nombre_completo }}</a></li>
+            <li class="breadcrumb-item active">Nueva Consulta</li>
+        </ol>
+    </nav>
+
+    <!-- Header con info del paciente -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="bi bi-clipboard-plus"></i> Nueva Consulta Médica
+                {% if current_user.is_enfermera %}
+                <span class="badge bg-info ms-2">Enfermería</span>
+                {% endif %}
+            </h2>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title mb-1">Paciente</h6>
+                    <p class="mb-1"><strong>{{ estudiante.nombre_completo }}</strong></p>
+                    <small class="text-muted">
+                        {{ estudiante.edad }} años | {{ 'Masculino' if estudiante.sexo == 'M' else 'Femenino' }}<br>
+                        CI: {{ estudiante.ci }} | Mat: {{ estudiante.matricula }}
+                    </small>
+                    {% if estudiante.tiene_alergias %}
+                    <div class="alert alert-warning mt-2 mb-0 py-1">
+                        <small><i class="bi bi-exclamation-triangle"></i> <strong>Alergias:</strong> {{ estudiante.alergias }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.is_enfermera %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Instrucciones para Enfermería:</strong> Registra los signos vitales y el examen físico del paciente. 
+        El diagnóstico y tratamiento serán completados por el médico.
+    </div>
+    {% endif %}
+
+    <!-- Formulario -->
+    <form method="POST" action="{{ url_for('consultas.nueva', estudiante_id=estudiante.id) }}" id="formConsulta">
+        <div class="row">
+            <!-- Columna Izquierda: Motivo y Signos Vitales -->
+            <div class="col-md-6">
+                <!-- Motivo de Consulta -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Motivo de Consulta</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="motivo_consulta" name="motivo_consulta" 
+                                  rows="4" placeholder="Describa el motivo de la consulta..." required></textarea>
+                    </div>
+                </div>
+
+                <!-- Signos Vitales -->
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="bi bi-activity"></i> Signos Vitales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="presion_arterial" class="form-label">Presión Arterial</label>
+                                <input type="text" class="form-control" id="presion_arterial" 
+                                       name="presion_arterial" placeholder="Ej: 120/80">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="frecuencia_cardiaca" class="form-label">Frecuencia Cardíaca (lat/min)</label>
+                                <input type="number" class="form-control" id="frecuencia_cardiaca" 
+                                       name="frecuencia_cardiaca" placeholder="Ej: 72">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="temperatura" class="form-label">Temperatura (°C)</label>
+                                <input type="number" step="0.1" class="form-control" id="temperatura" 
+                                       name="temperatura" placeholder="Ej: 36.5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="frecuencia_respiratoria" class="form-label">Frecuencia Respiratoria (resp/min)</label>
+                                <input type="number" class="form-control" id="frecuencia_respiratoria" 
+                                       name="frecuencia_respiratoria" placeholder="Ej: 18">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="saturacion_oxigeno" class="form-label">Saturación O₂ (%)</label>
+                                <input type="number" class="form-control" id="saturacion_oxigeno" 
+                                       name="saturacion_oxigeno" placeholder="Ej: 98">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="peso" class="form-label">Peso (kg)</label>
+                                <input type="number" step="0.1" class="form-control" id="peso" 
+                                       name="peso" placeholder="Ej: 70.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="talla" class="form-label">Talla (cm)</label>
+                                <input type="number" step="0.1" class="form-control" id="talla" 
+                                       name="talla" placeholder="Ej: 170">
+                            </div>
+                        </div>
+                        <!-- Mostrar IMC si hay peso y talla -->
+                        <div id="imcResultado" class="alert alert-info" style="display: none;">
+                            <strong>IMC:</strong> <span id="imcValor"></span> - <span id="imcClasificacion"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examen Físico -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-stethoscope"></i> Examen Físico</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="examen_fisico" name="examen_fisico" 
+                                  rows="5" placeholder="Describa los hallazgos del examen físico..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: SOLO PARA MÉDICOS -->
+            <div class="col-md-6">
+                {% if current_user.can_complete_consulta() %}
+                
+                <!-- Diagnóstico -->
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-file-medical"></i> Diagnóstico</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="diagnostico" name="diagnostico" 
+                                  rows="4" placeholder="Indique el diagnóstico o impresión diagnóstica..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Plan de Tratamiento -->
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Plan de Tratamiento</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="plan_tratamiento" name="plan_tratamiento" 
+                                  rows="4" placeholder="Describa el plan de tratamiento..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Prescripciones -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-capsule"></i> Prescripciones</h5>
+                            <button type="button" class="btn btn-sm btn-light" onclick="agregarMedicamento()">
+                                <i class="bi bi-plus-circle"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="listaMedicamentos">
+                            <!-- Los medicamentos se agregarán dinámicamente aquí -->
+                            <p class="text-muted text-center py-3">
+                                <i class="bi bi-info-circle"></i> Haga clic en "Agregar" para prescribir medicamentos
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicaciones -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Indicaciones al Paciente</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="indicaciones" name="indicaciones" 
+                                  rows="3" placeholder="Recomendaciones e indicaciones..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-chat-square-text"></i> Observaciones</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="observaciones" name="observaciones" 
+                                  rows="2" placeholder="Observaciones adicionales..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Requiere Referencia -->
+                <div class="card mb-3 border-danger">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="requiere_referencia" 
+                                   name="requiere_referencia" value="si">
+                            <label class="form-check-label" for="requiere_referencia">
+                                <strong class="text-danger">
+                                    <i class="bi bi-hospital"></i> Requiere referencia al hospital
+                                </strong>
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Marque esta opción si el paciente necesita ser referido al Hospital Universitario Japonés
+                        </small>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- Mensaje para enfermeras -->
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle me-2"></i>Registro de Enfermería</h5>
+                    <p class="mb-0">
+                        Has completado el registro de signos vitales y examen físico. 
+                        El médico completará el diagnóstico y tratamiento posteriormente.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="card mt-3 mb-5">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('estudiantes.ficha', id=estudiante.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-save"></i> Guardar Consulta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let contadorMedicamentos = 0;
+
+// Calcular IMC automáticamente
+document.getElementById('peso').addEventListener('input', calcularIMC);
+document.getElementById('talla').addEventListener('input', calcularIMC);
+
+function calcularIMC() {
+    const peso = parseFloat(document.getElementById('peso').value);
+    const talla = parseFloat(document.getElementById('talla').value);
+    
+    if (peso > 0 && talla > 0) {
+        const tallaMts = talla / 100;
+        const imc = (peso / (tallaMts * tallaMts)).toFixed(2);
+        
+        let clasificacion = '';
+        if (imc < 18.5) clasificacion = 'Bajo peso';
+        else if (imc < 25) clasificacion = 'Normal';
+        else if (imc < 30) clasificacion = 'Sobrepeso';
+        else clasificacion = 'Obesidad';
+        
+        document.getElementById('imcValor').textContent = imc;
+        document.getElementById('imcClasificacion').textContent = clasificacion;
+        document.getElementById('imcResultado').style.display = 'block';
+    } else {
+        document.getElementById('imcResultado').style.display = 'none';
+    }
+}
+
+// Agregar medicamento dinámicamente (solo para médicos)
+{% if current_user.can_complete_consulta() %}
+function agregarMedicamento() {
+    contadorMedicamentos++;
+    
+    const html = `
+        <div class="card mb-2 medicamento-item" id="med-${contadorMedicamentos}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0">Medicamento #${contadorMedicamentos}</h6>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="eliminarMedicamento(${contadorMedicamentos})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <input type="text" class="form-control form-control-sm" name="medicamento[]" 
+                               placeholder="Nombre del medicamento" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <input type="text" class="form-control form-control-sm" name="dosis[]" 
+                               placeholder="Dosis (ej: 500mg)">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-8 mb-2">
+                        <input type="text" class="form-control form-control-sm" name="frecuencia[]" 
+                               placeholder="Frecuencia (ej: cada 8 horas)">
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <input type="number" class="form-control form-control-sm" name="duracion[]" 
+                               placeholder="Días">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Si es el primer medicamento, limpiar el mensaje
+    if (contadorMedicamentos === 1) {
+        document.getElementById('listaMedicamentos').innerHTML = '';
+    }
+    
+    document.getElementById('listaMedicamentos').insertAdjacentHTML('beforeend', html);
+}
+
+function eliminarMedicamento(id) {
+    document.getElementById('med-' + id).remove();
+    
+    // Si no quedan medicamentos, mostrar mensaje
+    const medicamentos = document.querySelectorAll('.medicamento-item');
+    if (medicamentos.length === 0) {
+        document.getElementById('listaMedicamentos').innerHTML = `
+            <p class="text-muted text-center py-3">
+                <i class="bi bi-info-circle"></i> Haga clic en "Agregar" para prescribir medicamentos
+            </p>
+        `;
+        contadorMedicamentos = 0;
+    }
+}
+{% endif %}
+</script>
+{% endblock %}

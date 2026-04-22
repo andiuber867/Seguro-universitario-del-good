@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Orden {{ orden.codigo_qr }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-receipt me-2"></i>Orden de Referencia #{{ orden.id }}
+            </h2>
+            <p class="text-muted mb-0">{{ orden.codigo_qr }}</p>
+        </div>
+        <div>
+            <span class="badge bg-{{ orden.color_estado }} fs-5">
+                <i class="bi bi-{{ orden.icono_estado }} me-1"></i>
+                {{ orden.estado|upper }}
+            </span>
+            {% if orden.prioridad == 'urgente' %}
+            <span class="badge bg-danger fs-6 ms-2">URGENTE</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna Izquierda: Información -->
+        <div class="col-lg-4">
+            <!-- Información del Paciente -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Paciente</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nombre:</strong><br>{{ orden.estudiante.nombre_completo }}</p>
+                    <p><strong>CI:</strong> {{ orden.estudiante.ci }}</p>
+                    <p><strong>Edad:</strong> {{ orden.estudiante.edad }} años</p>
+                    <p><strong>Carrera:</strong><br>{{ orden.estudiante.carrera }}</p>
+                    {% if orden.estudiante.grupo_sanguineo %}
+                    <p><strong>Grupo Sanguíneo:</strong> 
+                        <span class="badge bg-danger">{{ orden.estudiante.grupo_sanguineo }}</span>
+                    </p>
+                    {% endif %}
+                    <a href="{{ url_for('estudiantes.ficha', id=orden.estudiante.id) }}" 
+                       class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-eye me-1"></i>Ver Ficha Completa
+                    </a>
+                </div>
+            </div>
+
+            <!-- Información del Médico -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>Médico Emisor</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>{{ orden.medico.nombre_completo }}</strong></p>
+                    <p class="text-muted mb-0 small">{{ orden.medico.rol|capitalize }}</p>
+                </div>
+            </div>
+
+            <!-- Código QR -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-qr-code me-2"></i>Código QR</h6>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename='qr_codes/' + orden.codigo_qr + '.png') }}" 
+                         alt="QR Code" 
+                         class="img-fluid mb-3"
+                         style="max-width: 250px;">
+                    <p class="mb-2"><strong>{{ orden.codigo_qr }}</strong></p>
+                    <a href="{{ url_for('ordenes.descargar_qr', id=orden.id) }}" 
+                       class="btn btn-sm btn-outline-info w-100">
+                        <i class="bi bi-download me-1"></i>Descargar QR
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Detalles -->
+        <div class="col-lg-8">
+            <!-- Detalles de la Referencia -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-file-medical me-2"></i>Detalles de la Referencia</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Tipo de Atención:</strong><br>{{ orden.tipo_atencion }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if orden.especialidad %}
+                            <p><strong>Especialidad:</strong><br>{{ orden.especialidad }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <p><strong>Diagnóstico Presuntivo:</strong><br>{{ orden.diagnostico_presuntivo }}</p>
+                    <p><strong>Motivo de Referencia:</strong><br>{{ orden.motivo_referencia }}</p>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p><strong>Prioridad:</strong> 
+                                <span class="badge bg-{{ orden.color_prioridad }}">
+                                    {{ orden.prioridad|upper }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Fecha de Emisión:</strong><br>
+                                {{ orden.fecha_emision.strftime('%d/%m/%Y %H:%M') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consulta Relacionada -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>Consulta de Origen</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Fecha:</strong> {{ orden.consulta.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p><strong>Motivo:</strong> {{ orden.consulta.motivo_consulta }}</p>
+                    {% if orden.consulta.diagnostico %}
+                    <p><strong>Diagnóstico:</strong> {{ orden.consulta.diagnostico }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('consultas.ver', id=orden.consulta.id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>Ver Consulta Completa
+                    </a>
+                </div>
+            </div>
+
+            <!-- Estado y Seguimiento -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Estado y Seguimiento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <!-- Emisión -->
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Emitida:</strong> {{ orden.fecha_emision.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+
+                        <!-- Presentación -->
+                        {% if orden.fecha_presentacion_hospital %}
+                        <div class="mb-3">
+                            <i class="bi bi-hospital text-info me-2"></i>
+                            <strong>Presentada en Hospital:</strong> 
+                            {{ orden.fecha_presentacion_hospital.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Completada -->
+                        {% if orden.fecha_completada %}
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Completada:</strong> 
+                            {{ orden.fecha_completada.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Días desde emisión -->
+                        {% if orden.estado != 'completada' %}
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            {{ orden.dias_desde_emision }} días desde emisión
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados del Hospital (si está completada) -->
+            {% if orden.estado == 'completada' %}
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Resultados del Hospital</h5>
+                </div>
+                <div class="card-body">
+                    {% if orden.diagnostico_hospital %}
+                    <p><strong>Diagnóstico Final:</strong><br>{{ orden.diagnostico_hospital }}</p>
+                    {% endif %}
+                    
+                    {% if orden.tratamiento_aplicado %}
+                    <p><strong>Tratamiento Aplicado:</strong><br>{{ orden.tratamiento_aplicado }}</p>
+                    {% endif %}
+                    
+                    {% if orden.resultado %}
+                    <p><strong>Resultado:</strong><br>{{ orden.resultado }}</p>
+                    {% endif %}
+                    
+                    {% if orden.observaciones_hospital %}
+                    <p><strong>Observaciones:</strong><br>{{ orden.observaciones_hospital }}</p>
+                    {% endif %}
+
+                    <!-- Imágenes Adjuntas -->
+                    {% if orden.imagenes.count() > 0 %}
+                    <hr>
+                    <h5 class="mt-4 mb-3">
+                        <i class="bi bi-images me-2"></i>Imágenes Adjuntas ({{ orden.imagenes.count() }})
+                    </h5>
+                    <div class="row g-3">
+                        {% for imagen in orden.imagenes %}
+                        <div class="col-md-4">
+                            <div class="card">
+                                <a href="{{ url_for('ordenes.ver_imagen', imagen_id=imagen.id) }}" target="_blank">
+                                    {% if imagen.nombre_archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')) %}
+                                    <img src="{{ url_for('ordenes.ver_imagen', imagen_id=imagen.id) }}" 
+                                         class="card-img-top" 
+                                         alt="{{ imagen.nombre_archivo }}"
+                                         style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                                    </div>
+                                    {% endif %}
+                                </a>
+                                <div class="card-body">
+                                    <p class="card-text small mb-1">
+                                        <strong>{{ imagen.nombre_archivo }}</strong>
+                                    </p>
+                                    {% if imagen.tipo_imagen %}
+                                    <span class="badge bg-info">{{ imagen.tipo_imagen }}</span>
+                                    {% endif %}
+                                    {% if imagen.descripcion %}
+                                    <p class="card-text small text-muted mt-2">{{ imagen.descripcion }}</p>
+                                    {% endif %}
+                                    <small class="text-muted d-block mt-2">
+                                        {{ imagen.fecha_subida.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                    {% if current_user.is_admin %}
+                                    <form method="POST" action="{{ url_for('ordenes.eliminar_imagen', imagen_id=imagen.id) }}" 
+                                          class="mt-2"
+                                          onsubmit="return confirm('¿Eliminar esta imagen?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Acciones -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('ordenes.lista') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver a Lista
+                        </a>
+                        
+                        {% if orden.estado == 'pendiente' %}
+                        <a href="{{ url_for('ordenes.ver_qr', codigo=orden.codigo_qr) }}" 
+                           class="btn btn-info" target="_blank">
+                            <i class="bi bi-qr-code me-2"></i>Vista Hospital
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

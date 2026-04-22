@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Orden {{ orden.codigo_qr }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Encabezado -->
+    <div class="text-center mb-4">
+        <h2><i class="bi bi-qr-code me-2"></i>Orden de Referencia</h2>
+        <h3 class="text-primary">{{ orden.codigo_qr }}</h3>
+        <span class="badge bg-{{ orden.color_estado }} fs-5">
+            <i class="bi bi-{{ orden.icono_estado }} me-1"></i>
+            {{ orden.estado|upper }}
+        </span>
+    </div>
+
+    <!-- Información del Paciente -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Paciente</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nombre:</strong> {{ orden.estudiante.nombre_completo }}</p>
+                    <p><strong>CI:</strong> {{ orden.estudiante.ci }}</p>
+                    <p><strong>Edad:</strong> {{ orden.estudiante.edad }} años</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Carrera:</strong> {{ orden.estudiante.carrera }}</p>
+                    <p><strong>Grupo Sanguíneo:</strong> {{ orden.estudiante.grupo_sanguineo or 'No especificado' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalles de la Orden -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-file-medical me-2"></i>Detalles de la Referencia</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Tipo de Atención:</strong> {{ orden.tipo_atencion }}</p>
+            {% if orden.especialidad %}
+            <p><strong>Especialidad:</strong> {{ orden.especialidad }}</p>
+            {% endif %}
+            <p><strong>Diagnóstico Presuntivo:</strong><br>{{ orden.diagnostico_presuntivo }}</p>
+            <p><strong>Motivo de Referencia:</strong><br>{{ orden.motivo_referencia }}</p>
+            <p><strong>Prioridad:</strong> 
+                <span class="badge bg-{{ orden.color_prioridad }}">{{ orden.prioridad|upper }}</span>
+            </p>
+            <p><strong>Fecha de Emisión:</strong> {{ orden.fecha_emision.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+
+    <!-- Marcar como Presentada -->
+    {% if orden.estado == 'pendiente' %}
+    <div class="card mb-4 border-warning">
+        <div class="card-body text-center">
+            <h5><i class="bi bi-hospital me-2"></i>Registrar Presentación en Hospital</h5>
+            <p class="text-muted">El paciente se ha presentado en el hospital</p>
+            <form method="POST" action="{{ url_for('ordenes.marcar_presentada', codigo=orden.codigo_qr) }}">
+                <button type="submit" class="btn btn-warning btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>Marcar como Presentada
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Registrar Atención Completada CON IMÁGENES -->
+    {% if orden.estado == 'presentada' %}
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Registrar Atención Completada</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('ordenes.registrar_atencion', codigo=orden.codigo_qr) }}" 
+                  enctype="multipart/form-data">
+                
+                <div class="mb-3">
+                    <label class="form-label">Diagnóstico Final *</label>
+                    <textarea name="diagnostico_hospital" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tratamiento Aplicado *</label>
+                    <textarea name="tratamiento_aplicado" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Resultado *</label>
+                    <textarea name="resultado" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Observaciones Adicionales</label>
+                    <textarea name="observaciones_hospital" class="form-control" rows="2"></textarea>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- NUEVA SECCIÓN: SUBIR IMÁGENES -->
+                <div class="mb-4">
+                    <h5 class="mb-3">
+                        <i class="bi bi-images me-2"></i>Adjuntar Imágenes de Resultados
+                    </h5>
+                    <p class="text-muted small">
+                        Puede adjuntar radiografías, análisis, estudios u otros resultados médicos
+                        <br>Formatos permitidos: JPG, PNG, GIF, PDF, BMP (Máximo 10MB por archivo)
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Seleccionar Imágenes/Archivos</label>
+                        <input type="file" name="imagenes" class="form-control" multiple 
+                               accept="image/*,.pdf" id="imagenesInput">
+                        <small class="text-muted">Puede seleccionar múltiples archivos</small>
+                    </div>
+
+                    <!-- Preview de imágenes seleccionadas -->
+                    <div id="imagenesPreview" class="row g-3 mt-3"></div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle-fill me-2"></i>Completar Atención
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resultados Completados CON IMÁGENES -->
+    {% if orden.estado == 'completada' %}
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Atención Completada</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Fecha de Completado:</strong> {{ orden.fecha_completada.strftime('%d/%m/%Y %H:%M') }}</p>
+            <hr>
+            <p><strong>Diagnóstico Final:</strong><br>{{ orden.diagnostico_hospital }}</p>
+            <p><strong>Tratamiento Aplicado:</strong><br>{{ orden.tratamiento_aplicado }}</p>
+            <p><strong>Resultado:</strong><br>{{ orden.resultado }}</p>
+            {% if orden.observaciones_hospital %}
+            <p><strong>Observaciones:</strong><br>{{ orden.observaciones_hospital }}</p>
+            {% endif %}
+
+            <!-- MOSTRAR IMÁGENES ADJUNTAS -->
+            {% if orden.imagenes.count() > 0 %}
+            <hr>
+            <h5 class="mt-4 mb-3">
+                <i class="bi bi-images me-2"></i>Imágenes de Resultados Adjuntas
+            </h5>
+            <div class="row g-3">
+                {% for imagen in orden.imagenes %}
+                <div class="col-md-4">
+                    <div class="card">
+                        <a href="{{ url_for('ordenes.ver_imagen', imagen_id=imagen.id) }}" target="_blank">
+                            {% if imagen.nombre_archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')) %}
+                            <img src="{{ url_for('ordenes.ver_imagen', imagen_id=imagen.id) }}" 
+                                 class="card-img-top" 
+                                 alt="{{ imagen.nombre_archivo }}"
+                                 style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                 style="height: 200px;">
+                                <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <p class="card-text small mb-1">
+                                <strong>{{ imagen.nombre_archivo }}</strong>
+                            </p>
+                            {% if imagen.tipo_imagen %}
+                            <p class="card-text small mb-1">
+                                <span class="badge bg-info">{{ imagen.tipo_imagen }}</span>
+                            </p>
+                            {% endif %}
+                            {% if imagen.descripcion %}
+                            <p class="card-text small text-muted">{{ imagen.descripcion }}</p>
+                            {% endif %}
+                            <small class="text-muted">{{ imagen.fecha_subida.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Script para preview de imágenes -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('imagenesInput');
+    const preview = document.getElementById('imagenesPreview');
+    
+    if (input) {
+        input.addEventListener('change', function(e) {
+            preview.innerHTML = '';
+            const files = Array.from(e.target.files);
+            
+            files.forEach((file, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-3';
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        card.innerHTML = `
+                            <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                            <div class="card-body p-2">
+                                <small class="text-muted">${file.name}</small>
+                            </div>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    card.innerHTML = `
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                            <p class="small mb-0">${file.name}</p>
+                        </div>
+                    `;
+                }
+                
+                col.appendChild(card);
+                preview.appendChild(col);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

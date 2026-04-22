@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Estudiantes - APSA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header con búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-people"></i> Estudiantes</h2>
+            <p class="text-muted">Total: {{ estudiantes.total }} estudiantes registrados</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('estudiantes.nuevo') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Nuevo Estudiante
+            </a>
+        </div>
+    </div>
+
+    <!-- Búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('estudiantes.lista') }}">
+                <div class="row">
+                    <div class="col-md-10">
+                        <input type="text" 
+                               name="buscar" 
+                               class="form-control" 
+                               placeholder="Buscar por nombre, CI, matrícula o carrera..."
+                               value="{{ buscar or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de estudiantes -->
+    <div class="card">
+        <div class="card-body">
+            {% if estudiantes.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>CI</th>
+                            <th>Estudiante</th>
+                            <th>Edad</th>
+                            <th>Carrera</th>
+                            <th>Matrícula</th>
+                            <th>Teléfono</th>
+                            <th>Consultas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estudiante in estudiantes.items %}
+                        <tr>
+                            <td>{{ estudiante.ci }}</td>
+                            <td>
+                                <strong>{{ estudiante.nombre_completo }}</strong>
+                                {% if estudiante.tiene_alergias %}
+                                <span class="badge bg-danger ms-2" title="Tiene alergias">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ estudiante.edad }} años</td>
+                            <td>
+                                <small>{{ estudiante.carrera }}</small>
+                            </td>
+                            <td>{{ estudiante.matricula }}</td>
+                            <td>{{ estudiante.telefono or '-' }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ estudiante.get_total_consultas() }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('estudiantes.ficha', id=estudiante.id) }}" 
+                                       class="btn btn-outline-primary" 
+                                       title="Ver ficha">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('consultas.nueva', estudiante_id=estudiante.id) }}" 
+                                       class="btn btn-outline-success" 
+                                       title="Nueva consulta">
+                                        <i class="bi bi-clipboard-plus"></i>
+                                    </a>
+                                    <a href="{{ url_for('estudiantes.editar', id=estudiante.id) }}" 
+                                       class="btn btn-outline-secondary" 
+                                       title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger" 
+                                            title="Eliminar"
+                                            onclick="confirmarEliminar({{ estudiante.id }}, '{{ estudiante.nombre_completo }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if estudiantes.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if estudiantes.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('estudiantes.lista', page=estudiantes.prev_num, buscar=buscar) }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in estudiantes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == estudiantes.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('estudiantes.lista', page=page_num, buscar=buscar) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if estudiantes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('estudiantes.lista', page=estudiantes.next_num, buscar=buscar) }}">
+                            Siguiente
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox" style="font-size: 4rem;"></i>
+                <p class="mt-3">No se encontraron estudiantes</p>
+                {% if buscar %}
+                <a href="{{ url_for('estudiantes.lista') }}" class="btn btn-outline-primary">
+                    Ver todos los estudiantes
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Form oculto para eliminar -->
+<form id="formEliminar" method="POST" style="display: none;"></form>
+
+<script>
+function confirmarEliminar(id, nombre) {
+    if (confirm('¿Está seguro que desea eliminar a ' + nombre + '?\n\nEsta acción no se puede deshacer y eliminará todas las consultas asociadas.')) {
+        const form = document.getElementById('formEliminar');
+        form.action = '/estudiantes/' + id + '/eliminar';
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

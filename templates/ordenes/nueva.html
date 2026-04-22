@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Orden de Referencia - APSA{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('ordenes.lista') }}">Órdenes</a></li>
+            <li class="breadcrumb-item active">Nueva Orden</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-qr-code"></i> Generar Orden de Referencia</h2>
+            <p class="text-muted">Para {{ consulta.estudiante.nombre_completo }}</p>
+        </div>
+    </div>
+
+    <!-- Info de la consulta -->
+    <div class="alert alert-info">
+        <strong><i class="bi bi-info-circle"></i> Consulta del {{ consulta.fecha_formateada }}</strong>
+        <p class="mb-0"><strong>Motivo:</strong> {{ consulta.motivo_consulta }}</p>
+        {% if consulta.diagnostico %}
+        <p class="mb-0"><strong>Diagnóstico:</strong> {{ consulta.diagnostico }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Formulario -->
+    <form method="POST" action="{{ url_for('ordenes.nueva', consulta_id=consulta.id) }}">
+        <div class="card mb-3">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-hospital"></i> Datos de la Referencia</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tipo_atencion" class="form-label">
+                            Tipo de Atención <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="tipo_atencion" name="tipo_atencion" required>
+                            <option value="">Seleccione tipo...</option>
+                            <option value="consulta">Consulta Médica Especializada</option>
+                            <option value="laboratorio">Exámenes de Laboratorio</option>
+                            <option value="imagen">Estudios de Imagen</option>
+                            <option value="procedimiento">Procedimiento Médico</option>
+                            <option value="urgencia">Atención de Urgencia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="especialidad" class="form-label">Especialidad</label>
+                        <input type="text" class="form-control" id="especialidad" name="especialidad" 
+                               placeholder="Ej: Cardiología, Traumatología...">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="diagnostico_presuntivo" class="form-label">
+                            Diagnóstico Presuntivo <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="diagnostico_presuntivo" name="diagnostico_presuntivo" 
+                                  rows="3" placeholder="Describa el diagnóstico o sospecha diagnóstica..." 
+                                  required>{{ consulta.diagnostico or '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="motivo_referencia" class="form-label">
+                            Motivo de Referencia <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="motivo_referencia" name="motivo_referencia" 
+                                  rows="4" placeholder="Explique por qué se refiere al hospital..." 
+                                  required></textarea>
+                        <small class="text-muted">
+                            Indique claramente qué requiere el paciente del hospital 
+                            (estudios específicos, evaluación especializada, tratamiento, etc.)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="prioridad" class="form-label">
+                            Prioridad <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="prioridad" name="prioridad" required>
+                            <option value="normal" selected>Normal</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Paciente (preview) -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Información del Paciente</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Nombre:</dt>
+                            <dd class="col-sm-8">{{ consulta.estudiante.nombre_completo }}</dd>
+                            
+                            <dt class="col-sm-4">CI:</dt>
+                            <dd class="col-sm-8">{{ consulta.estudiante.ci }}</dd>
+                            
+                            <dt class="col-sm-4">Edad:</dt>
+                            <dd class="col-sm-8">{{ consulta.estudiante.edad }} años</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Grupo Sanguíneo:</dt>
+                            <dd class="col-sm-7">{{ consulta.estudiante.grupo_sanguineo or 'No registrado' }}</dd>
+                            
+                            <dt class="col-sm-5">Teléfono:</dt>
+                            <dd class="col-sm-7">{{ consulta.estudiante.telefono or '-' }}</dd>
+                            
+                            {% if consulta.estudiante.alergias %}
+                            <dt class="col-sm-12 text-danger"><i class="bi bi-exclamation-triangle"></i> Alergias:</dt>
+                            <dd class="col-sm-12"><small>{{ consulta.estudiante.alergias }}</small></dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advertencia -->
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle"></i> Importante</h5>
+            <ul class="mb-0">
+                <li>Al generar la orden, se creará un código QR único para acceso del hospital</li>
+                <li>El estudiante debe presentar la orden impresa o digital en el hospital</li>
+                <li>El hospital registrará la atención escaneando el código QR</li>
+            </ul>
+        </div>
+
+        <!-- Botones -->
+        <div class="card mb-5">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('consultas.ver', id=consulta.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-qr-code"></i> Generar Orden de Referencia
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

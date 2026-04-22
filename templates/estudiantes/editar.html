@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ estudiante.nombre_completo }} - APSA{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('estudiantes.lista') }}">Estudiantes</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('estudiantes.ficha', id=estudiante.id) }}">{{ estudiante.nombre_completo }}</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-pencil"></i> Editar Estudiante</h2>
+            <p class="text-muted">{{ estudiante.nombre_completo }} - CI: {{ estudiante.ci }}</p>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form method="POST" action="{{ url_for('estudiantes.editar', id=estudiante.id) }}">
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Datos Personales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="nombre" class="form-label">Nombre(s) *</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                               value="{{ estudiante.nombre }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="apellido_paterno" class="form-label">Apellido Paterno *</label>
+                        <input type="text" class="form-control" id="apellido_paterno" name="apellido_paterno" 
+                               value="{{ estudiante.apellido_paterno }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="apellido_materno" class="form-label">Apellido Materno</label>
+                        <input type="text" class="form-control" id="apellido_materno" name="apellido_materno" 
+                               value="{{ estudiante.apellido_materno or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="ci" class="form-label">CI *</label>
+                        <input type="text" class="form-control" id="ci" name="ci" 
+                               value="{{ estudiante.ci }}" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento *</label>
+                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" 
+                               value="{{ estudiante.fecha_nacimiento_formato() }}" required>
+                        <small class="text-muted">Edad: {{ estudiante.edad }} años</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="sexo" class="form-label">Sexo *</label>
+                        <select class="form-select" id="sexo" name="sexo" required>
+                            <option value="M" {% if estudiante.sexo == 'M' %}selected{% endif %}>Masculino</option>
+                            <option value="F" {% if estudiante.sexo == 'F' %}selected{% endif %}>Femenino</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="matricula" class="form-label">Matrícula *</label>
+                        <input type="text" class="form-control" id="matricula" name="matricula" 
+                               value="{{ estudiante.matricula }}" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-telephone"></i> Datos de Contacto</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="direccion" class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" 
+                               value="{{ estudiante.direccion or '' }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" 
+                               value="{{ estudiante.telefono or '' }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ estudiante.email or '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-book"></i> Información Académica</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label for="carrera" class="form-label">Carrera *</label>
+                        <input type="text" class="form-control" id="carrera" name="carrera" 
+                               value="{{ estudiante.carrera }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="semestre" class="form-label">Semestre</label>
+                        <input type="number" class="form-control" id="semestre" name="semestre" 
+                               value="{{ estudiante.semestre or '' }}" min="1" max="12">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-heart-pulse"></i> Información Médica</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="grupo_sanguineo" class="form-label">Grupo Sanguíneo</label>
+                        <select class="form-select" id="grupo_sanguineo" name="grupo_sanguineo">
+                            <option value="">Seleccione...</option>
+                            {% for grupo in ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] %}
+                            <option value="{{ grupo }}" {% if estudiante.grupo_sanguineo == grupo %}selected{% endif %}>
+                                {{ grupo }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-9 mb-3">
+                        <label for="alergias" class="form-label">
+                            <i class="bi bi-exclamation-triangle text-warning"></i> Alergias
+                        </label>
+                        <textarea class="form-control" id="alergias" name="alergias" rows="2">{{ estudiante.alergias or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="enfermedades_cronicas" class="form-label">Enfermedades Crónicas</label>
+                        <textarea class="form-control" id="enfermedades_cronicas" name="enfermedades_cronicas" rows="2">{{ estudiante.enfermedades_cronicas or '' }}</textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="medicamentos_actuales" class="form-label">Medicamentos Actuales</label>
+                        <textarea class="form-control" id="medicamentos_actuales" name="medicamentos_actuales" rows="2">{{ estudiante.medicamentos_actuales or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="cirugias_previas" class="form-label">Cirugías Previas</label>
+                        <textarea class="form-control" id="cirugias_previas" name="cirugias_previas" rows="2">{{ estudiante.cirugias_previas or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-person-exclamation"></i> Contacto de Emergencia</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label for="contacto_emergencia_nombre" class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="contacto_emergencia_nombre" 
+                               name="contacto_emergencia_nombre" value="{{ estudiante.contacto_emergencia_nombre or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="contacto_emergencia_telefono" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="contacto_emergencia_telefono" 
+                               name="contacto_emergencia_telefono" value="{{ estudiante.contacto_emergencia_telefono or '' }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="contacto_emergencia_relacion" class="form-label">Relación</label>
+                        <input type="text" class="form-control" id="contacto_emergencia_relacion" 
+                               name="contacto_emergencia_relacion" value="{{ estudiante.contacto_emergencia_relacion or '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="card mt-3 mb-5">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('estudiantes.ficha', id=estudiante.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

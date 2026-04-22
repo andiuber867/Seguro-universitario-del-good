@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ config.APP_NAME }}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Partículas de fondo -->
+    <div class="background-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Navbar -->
+    {% if current_user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top animate-slide-down">
+        <div class="container-fluid">
+            <a class="navbar-brand animate-glow" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-heart-pulse-fill me-2"></i>
+                <strong>SSU</strong>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i>Inicio
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'estudiantes' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('estudiantes.lista') }}">
+                            <i class="bi bi-people me-1"></i>Estudiantes
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'consultas' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('consultas.lista') }}">
+                            <i class="bi bi-clipboard2-pulse me-1"></i>Consultas
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'ordenes' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('ordenes.lista') }}">
+                            <i class="bi bi-receipt me-1"></i>Órdenes
+                        </a>
+                    </li>
+
+                    {% if current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('usuarios.lista') }}">
+                            <i class="bi bi-people-fill me-1"></i>Usuarios
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    <!-- Selector de tema rápido -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="themeQuick" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-palette-fill"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end theme-dropdown">
+                            <li><a class="dropdown-item" href="#" onclick="setTheme('light')">
+                                <i class="bi bi-sun-fill text-warning"></i> Claro
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setTheme('dark')">
+                                <i class="bi bi-moon-fill text-primary"></i> Oscuro
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setTheme('pink')">
+                                <i class="bi bi-heart-fill text-danger"></i> Rosado
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setTheme('green')">
+                                <i class="bi bi-leaf-fill text-success"></i> Verde
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setTheme('uagrm')">
+                                <i class="bi bi-mortarboard-fill text-info"></i> UAGRM
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Usuario -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ current_user.nombre_completo }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person-badge"></i> {{ current_user.rol|title }}
+                                </h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                                    <i class="bi bi-gear-fill me-2"></i>Ajustes
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#infoModal">
+                                    <i class="bi bi-info-circle-fill me-2"></i>Información
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show animate-slide-down" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal de Ajustes -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear-fill me-2"></i>Ajustes
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Selector de Tema -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-palette-fill me-2"></i>Tema de Color
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <div class="theme-card" onclick="setTheme('light')">
+                                    <div class="theme-preview bg-light"></div>
+                                    <small>Claro</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="theme-card" onclick="setTheme('dark')">
+                                    <div class="theme-preview bg-dark"></div>
+                                    <small>Oscuro</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="theme-card" onclick="setTheme('pink')">
+                                    <div class="theme-preview" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                                    <small>Rosado</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="theme-card" onclick="setTheme('green')">
+                                    <div class="theme-preview" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+                                    <small>Verde</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="theme-card" onclick="setTheme('uagrm')">
+                                    <div class="theme-preview" style="background: linear-gradient(135deg, #dc3545 0%, #0d6efd 100%);"></div>
+                                    <small>UAGRM</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Animaciones -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-stars me-2"></i>Efectos
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="animationsToggle" checked>
+                            <label class="form-check-label" for="animationsToggle">
+                                Activar animaciones
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="particlesToggle" checked>
+                            <label class="form-check-label" for="particlesToggle">
+                                Partículas de fondo
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tamaño de fuente -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-fonts me-2"></i>Tamaño de Texto
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="setFontSize('small')">Pequeño</button>
+                            <button type="button" class="btn btn-outline-primary active" onclick="setFontSize('normal')">Normal</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="setFontSize('large')">Grande</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Información -->
+    <div class="modal fade" id="infoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-info-circle-fill me-2"></i>Información del Sistema
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='img/uagrm-escudo.png') }}" 
+                             alt="UAGRM" 
+                             style="width: 100px; height: 100px; object-fit: contain;">
+                    </div>
+                    <h6 class="fw-bold">Seguro Social Universitario - SSU</h6>
+                    <p class="text-muted">Sistema de gestión médica para estudiantes universitarios</p>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <i class="bi bi-calendar-check fs-3 text-primary"></i>
+                            <p class="mb-0 mt-2"><small>Versión</small></p>
+                            <p class="fw-bold">1.0.0</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <i class="bi bi-building fs-3 text-success"></i>
+                            <p class="mb-0 mt-2"><small>Institución</small></p>
+                            <p class="fw-bold">UAGRM FINI</p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-geo-alt-fill me-2"></i>
+                        <strong>Ubicación:</strong> Yapacaní, Santa Cruz, Bolivia
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Script -->
+    <script src="{{ url_for('static', filename='js/themes.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

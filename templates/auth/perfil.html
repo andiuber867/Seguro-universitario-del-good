@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - APSA{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+            <li class="breadcrumb-item active">Mi Perfil</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Usuario -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px; font-size: 3rem;">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-4">Nombre:</dt>
+                        <dd class="col-sm-8"><strong>{{ current_user.nombre_completo }}</strong></dd>
+                        
+                        <dt class="col-sm-4">Usuario:</dt>
+                        <dd class="col-sm-8">{{ current_user.username }}</dd>
+                        
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">{{ current_user.email }}</dd>
+                        
+                        <dt class="col-sm-4">Rol:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-info">{{ current_user.rol|upper }}</span>
+                        </dd>
+                        
+                        {% if current_user.telefono %}
+                        <dt class="col-sm-4">Teléfono:</dt>
+                        <dd class="col-sm-8">{{ current_user.telefono }}</dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-4">Cuenta creada:</dt>
+                        <dd class="col-sm-8">{{ current_user.created_at.strftime('%d/%m/%Y') }}</dd>
+                        
+                        {% if current_user.ultimo_acceso %}
+                        <dt class="col-sm-4">Último acceso:</dt>
+                        <dd class="col-sm-8">
+                            <small class="text-muted">
+                                {{ current_user.ultimo_acceso.strftime('%d/%m/%Y %H:%M') }}
+                            </small>
+                        </dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-4">Estado:</dt>
+                        <dd class="col-sm-8">
+                            {% if current_user.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permisos y Acciones -->
+        <div class="col-md-6">
+            <!-- Permisos del Rol -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-shield-check"></i> Permisos del Rol</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% if current_user.is_admin %}
+                            <li><i class="bi bi-check-circle text-success"></i> Acceso total al sistema</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Gestión de usuarios</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Registro de consultas completas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Generación de órdenes de referencia</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Acceso a reportes y estadísticas</li>
+                        {% elif current_user.is_medico %}
+                            <li><i class="bi bi-check-circle text-success"></i> Registro de consultas médicas</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Registro de signos vitales</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Generación de órdenes de referencia</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Acceso a historiales de pacientes</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Prescripción de medicamentos</li>
+                        {% elif current_user.is_enfermera %}
+                            <li><i class="bi bi-check-circle text-success"></i> Registro de signos vitales</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Búsqueda de pacientes</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Visualización de consultas</li>
+                            <li><i class="bi bi-x-circle text-danger"></i> No puede generar órdenes de referencia</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="card mb-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Configuración</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('auth.cambiar_password') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-key"></i> Cambiar Contraseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas Personales -->
+            {% if current_user.is_medico or current_user.is_enfermera %}
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Mis Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <h3 class="text-primary">{{ current_user.consultas_registradas.count() }}</h3>
+                        <p class="text-muted mb-0">Consultas Registradas</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

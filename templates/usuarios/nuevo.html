@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Usuario - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>Crear Nuevo Usuario
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('usuarios.nuevo') }}">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de Usuario *</label>
+                                <input type="text" name="username" class="form-control" required 
+                                       placeholder="Ej: alexander.gomez">
+                                <small class="text-muted">Para iniciar sesión en el sistema</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre Completo *</label>
+                                <input type="text" name="nombre_completo" class="form-control" required
+                                       placeholder="Ej: Alexander Gómez">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contraseña *</label>
+                                <input type="password" name="password" class="form-control" required minlength="6"
+                                       placeholder="Mínimo 6 caracteres">
+                                <small class="text-muted">Mínimo 6 caracteres</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Confirmar Contraseña *</label>
+                                <input type="password" name="password_confirm" class="form-control" required minlength="6"
+                                       placeholder="Repita la contraseña">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Rol *</label>
+                                <select name="rol" class="form-select" required>
+                                    <option value="">Seleccione un rol...</option>
+                                    <option value="admin">👑 Administrador - Acceso total</option>
+                                    <option value="medico">🩺 Médico - Registrar consultas y órdenes</option>
+                                    <option value="enfermera">💉 Enfermera - Registrar signos vitales</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="email" class="form-control" required
+                                       placeholder="ejemplo@correo.com">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" name="telefono" class="form-control"
+                                       placeholder="77123456">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <strong><i class="bi bi-info-circle me-2"></i>Permisos por Rol:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li><strong>Administrador:</strong> Acceso total al sistema, gestión de usuarios</li>
+                                        <li><strong>Médico:</strong> Registrar consultas, generar órdenes de referencia</li>
+                                        <li><strong>Enfermera:</strong> Registrar signos vitales, ver consultas</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <hr>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-save me-2"></i>Crear Usuario
+                                </button>
+                                <a href="{{ url_for('usuarios.lista') }}" class="btn btn-secondary btn-lg">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

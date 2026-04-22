@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Atender Consulta #{{ consulta.id }} - APSA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('consultas.lista') }}">Consultas</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('consultas.pendientes') }}">Pendientes</a></li>
+            <li class="breadcrumb-item active">Atender #{{ consulta.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-stethoscope me-2"></i>Atender Consulta #{{ consulta.id }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Info del Paciente -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Paciente:</strong> {{ consulta.estudiante.nombre_completo }}<br>
+                                <strong>Edad:</strong> {{ consulta.estudiante.edad }} años<br>
+                                <strong>CI:</strong> {{ consulta.estudiante.ci }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Motivo:</strong> {{ consulta.motivo_consulta }}<br>
+                                <strong>Fecha:</strong> {{ consulta.fecha_hora.strftime('%d/%m/%Y %H:%M') }}<br>
+                                <strong>Registrado por:</strong> {{ consulta.usuario.nombre_completo }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signos Vitales Registrados -->
+                    {% if consulta.presion_arterial or consulta.temperatura or consulta.frecuencia_cardiaca %}
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6><i class="bi bi-heart-pulse me-2"></i>Signos Vitales Registrados</h6>
+                            <div class="row">
+                                {% if consulta.presion_arterial %}
+                                <div class="col-md-3">
+                                    <strong>PA:</strong> {{ consulta.presion_arterial }}
+                                </div>
+                                {% endif %}
+                                {% if consulta.temperatura %}
+                                <div class="col-md-3">
+                                    <strong>Temperatura:</strong> {{ consulta.temperatura }}°C
+                                </div>
+                                {% endif %}
+                                {% if consulta.frecuencia_cardiaca %}
+                                <div class="col-md-3">
+                                    <strong>FC:</strong> {{ consulta.frecuencia_cardiaca }} lpm
+                                </div>
+                                {% endif %}
+                                {% if consulta.saturacion_oxigeno %}
+                                <div class="col-md-3">
+                                    <strong>Sat O₂:</strong> {{ consulta.saturacion_oxigeno }}%
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Examen Físico -->
+                    {% if consulta.examen_fisico %}
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6><i class="bi bi-clipboard-pulse me-2"></i>Examen Físico</h6>
+                            <p class="mb-0">{{ consulta.examen_fisico }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Formulario de Atención -->
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Diagnóstico *</label>
+                                <textarea name="diagnostico" class="form-control" rows="3" required></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Plan de Tratamiento</label>
+                                <textarea name="plan_tratamiento" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Indicaciones al Paciente</label>
+                                <textarea name="indicaciones" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Observaciones</label>
+                                <textarea name="observaciones" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <hr>
+                                <h5>Decidir Acción</h5>
+                                <p class="text-muted">¿Qué acción deseas tomar con esta consulta?</p>
+                            </div>
+
+                            <!-- Opción 1: Medicar Directamente -->
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h6 class="text-success">
+                                            <i class="bi bi-capsule me-2"></i>Medicar Directamente
+                                        </h6>
+                                        <p class="small text-muted">Prescribir medicamentos y completar la consulta</p>
+                                        
+                                        <div id="prescripciones-container">
+                                            <div class="row g-2 mb-2 prescripcion-row">
+                                                <div class="col-md-5">
+                                                    <input type="text" name="medicamento[]" class="form-control form-control-sm" 
+                                                           placeholder="Medicamento">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" name="dosis[]" class="form-control form-control-sm" 
+                                                           placeholder="Dosis">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" name="frecuencia[]" class="form-control form-control-sm" 
+                                                           placeholder="Frecuencia">
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <input type="number" name="duracion[]" class="form-control form-control-sm" 
+                                                           placeholder="Días">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="btn-agregar-prescripcion">
+                                            <i class="bi bi-plus-circle me-1"></i>Agregar Medicamento
+                                        </button>
+                                        
+                                        <button type="submit" name="accion" value="medicar" 
+                                                class="btn btn-success w-100">
+                                            <i class="bi bi-check-circle me-2"></i>Medicar y Completar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Opción 2: Generar Orden a Hospital -->
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-hospital me-2"></i>Generar Orden a Hospital
+                                        </h6>
+                                        <p class="small text-muted">Requiere atención especializada externa</p>
+                                        
+                                        <div class="alert alert-warning small">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            La consulta quedará en estado "En Referencia" hasta que el hospital complete la orden 
+                                            y el médico prescriba el tratamiento final.
+                                        </div>
+                                        
+                                        <button type="submit" name="accion" value="generar_orden" 
+                                                class="btn btn-primary w-100">
+                                            <i class="bi bi-arrow-right-circle me-2"></i>Generar Orden
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <hr>
+                                <a href="{{ url_for('consultas.pendientes') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('btn-agregar-prescripcion').addEventListener('click', function() {
+    const container = document.getElementById('prescripciones-container');
+    const nuevaFila = document.createElement('div');
+    nuevaFila.className = 'row g-2 mb-2 prescripcion-row';
+    nuevaFila.innerHTML = `
+        <div class="col-md-5">
+            <input type="text" name="medicamento[]" class="form-control form-control-sm" placeholder="Medicamento">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="dosis[]" class="form-control form-control-sm" placeholder="Dosis">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="frecuencia[]" class="form-control form-control-sm" placeholder="Frecuencia">
+        </div>
+        <div class="col-md-1">
+            <input type="number" name="duracion[]" class="form-control form-control-sm" placeholder="Días">
+        </div>
+    `;
+    container.appendChild(nuevaFila);
+});
+</script>
+{% endblock %}
