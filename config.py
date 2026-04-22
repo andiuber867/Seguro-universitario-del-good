@@ -3,15 +3,23 @@ from datetime import timedelta
 
 class Config:
     SECRET_KEY = 'dev-secret-key-apsa-2024'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///apsa.db'
+    
+    # En Vercel el sistema de archivos es de solo lectura excepto /tmp
+    if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_URL'):
+        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/apsa.db'
+        UPLOAD_FOLDER = '/tmp/qr_codes'
+    else:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///apsa.db'
+        UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'qr_codes')
+        
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'qr_codes')
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = None
     APP_NAME = 'SSU - Seguro Social Universitario'
